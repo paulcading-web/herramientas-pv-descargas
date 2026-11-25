@@ -1,7 +1,7 @@
 {
-  "version": "1.0.90",
+  "version": "1.0.91",
   "fecha": "2026-11-25",
-  "msi": "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.90.msi",
-  "sha256": "29950691c215b57342aa78954fb919cc20b910bf9bc32c14ae802b60812ec859",
-  "notas": "Tema oscuro: cajas desactivadas mas apagadas y textos ajustados."
+  "msi": "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.91.msi",
+  "sha256": "ce170981bd33de2beb1aba05f1d0e95339e8317fdc26a05dcacb6d332917d8e9",
+  "notas": "Actualizaciones visibles en 1 minuto."
 }
