@@ -1,7 +1,7 @@
 {
-  "version": "1.0.87",
+  "version": "1.0.88",
   "fecha": "2026-11-25",
-  "msi": "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.87.msi",
-  "sha256": "f53d9f0da5d6b42890ae48cdf183c8cb7940811af3c7f31481a645fcaf720f59",
-  "notas": "Version de prueba del actualizador."
+  "msi": "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.88.msi",
+  "sha256": "7ff068ce9b6791547c346b8ad58edd18463a85c53fab0018c043211ed536bd9b",
+  "notas": "Prueba del boton Actualizar."
 }
