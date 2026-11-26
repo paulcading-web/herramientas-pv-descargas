@@ -1,7 +1,7 @@
 {
-  "version": "1.0.91",
-  "fecha": "2026-11-25",
-  "msi": "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.91.msi",
-  "sha256": "ce170981bd33de2beb1aba05f1d0e95339e8317fdc26a05dcacb6d332917d8e9",
-  "notas": "Actualizaciones visibles en 1 minuto."
+  "version": "1.0.92",
+  "fecha": "2026-11-26",
+  "msi": "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.92.msi",
+  "sha256": "f374a68c9caf6beae3636d310aae11e3a868174466d98efdb3299f1148cd9a9d",
+  "notas": "Solicitar licencia por WhatsApp desde Mi Licencia."
 }
