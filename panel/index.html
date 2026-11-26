@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel Herramientas PV</title>
+<style>
+  :root{
+    --bg:#1e1e1e; --panel:#252526; --panel2:#2d2d30; --entrada:#333337;
+    --borde:#3a3a3e; --texto:#dedede; --tenue:#9a9a9a; --verde:#3ecf8e;
+    --verde2:#2bab73; --rojo:#f87171; --ambar:#fbbf24; --azul:#60a5fa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--texto);font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+  a{color:var(--azul)}
+  button{font:inherit;cursor:pointer;border:1px solid var(--borde);background:var(--panel2);color:var(--texto);border-radius:6px;padding:7px 12px}
+  button:hover{background:#3a3a3e}
+  button.pri{background:var(--verde);color:#06281a;border-color:var(--verde);font-weight:600}
+  button.pri:hover{background:var(--verde2)}
+  button.peligro{color:var(--rojo);border-color:#5a2a2a}
+  input,select,textarea{font:inherit;background:var(--entrada);color:var(--texto);border:1px solid var(--borde);border-radius:6px;padding:7px 9px;width:100%}
+  label{display:block;font-size:12px;color:var(--tenue);margin:8px 0 3px}
+  .oculto{display:none!important}
+  /* login */
+  #login{max-width:360px;margin:12vh auto;background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:28px}
+  #login h1{font-size:20px;margin:0 0 4px}
+  #login p{color:var(--tenue);margin:0 0 18px;font-size:13px}
+  #loginMsg{color:var(--rojo);font-size:13px;min-height:18px;margin-top:10px}
+  /* app */
+  header{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--borde);background:var(--panel)}
+  header h1{font-size:16px;margin:0;font-weight:600}
+  header .sp{flex:1}
+  header .quien{color:var(--tenue);font-size:12px}
+  nav{display:flex;gap:4px;padding:10px 20px 0}
+  nav button{border:none;background:none;color:var(--tenue);border-bottom:2px solid transparent;border-radius:0;padding:8px 14px}
+  nav button.act{color:var(--texto);border-bottom-color:var(--verde)}
+  main{padding:20px;max-width:1100px}
+  .tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+  .tarjeta{background:var(--panel);border:1px solid var(--borde);border-radius:10px;padding:14px 16px}
+  .tarjeta .n{font-size:26px;font-weight:700}
+  .tarjeta .e{color:var(--tenue);font-size:12px;margin-top:2px}
+  .caja{background:var(--panel);border:1px solid var(--borde);border-radius:10px;padding:16px;margin-bottom:18px}
+  .caja h2{font-size:14px;margin:0 0 12px;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--borde)}
+  th{color:var(--tenue);font-weight:600;font-size:12px}
+  tr:hover td{background:var(--panel2)}
+  .chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;border:1px solid var(--borde)}
+  .chip.cli{color:var(--verde);border-color:#2a5a44}
+  .chip.pro{color:var(--ambar);border-color:#5a4a1a}
+  .chip.ven{color:var(--rojo);border-color:#5a2a2a}
+  .fila{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .fila>div{flex:1;min-width:140px}
+  .barra{height:10px;background:var(--entrada);border-radius:5px;overflow:hidden}
+  .barra>i{display:block;height:100%;background:var(--verde)}
+  canvas{max-width:100%}
+  /* modal */
+  #modalBg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:10}
+  #modal{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:22px;width:420px;max-width:92vw}
+  #modal h3{margin:0 0 10px;font-size:16px}
+  .modbot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+  .msg{font-size:12px;color:var(--tenue);min-height:16px}
+  .vacio{color:var(--tenue);text-align:center;padding:30px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <h1>Panel Herramientas PV</h1>
+  <p>Entra con tu correo y contraseña de Supabase.</p>
+  <label>Correo</label>
+  <input id="lemail" type="email" autocomplete="username">
+  <label>Contraseña</label>
+  <input id="lpass" type="password" autocomplete="current-password">
+  <div style="margin-top:16px"><button class="pri" style="width:100%" onclick="entrar()">Entrar</button></div>
+  <div id="loginMsg"></div>
+</div>
+
+<!-- APP -->
+<div id="app" class="oculto">
+  <header>
+    <h1>⬤ Herramientas PV</h1>
+    <div class="sp"></div>
+    <span class="quien" id="quien"></span>
+    <button onclick="salir()">Salir</button>
+  </header>
+  <nav>
+    <button class="act" data-tab="resumen" onclick="ir('resumen')">Resumen</button>
+    <button data-tab="clientes" onclick="ir('clientes')">Clientes</button>
+    <button data-tab="uso" onclick="ir('uso')">Uso por cuenta</button>
+  </nav>
+
+  <!-- RESUMEN -->
+  <main id="tab-resumen">
+    <div class="tarjetas" id="kpis"></div>
+    <div class="caja"><h2>Comandos más usados</h2><canvas id="gTop" height="110"></canvas></div>
+    <div class="caja"><h2>Uso por día (últimos 30 días)</h2><canvas id="gDia" height="90"></canvas></div>
+    <div class="caja"><h2>Cuentas más activas</h2><div id="topCuentas"></div></div>
+  </main>
+
+  <!-- CLIENTES -->
+  <main id="tab-clientes" class="oculto">
+    <div class="caja">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+        <input id="buscaCli" placeholder="Buscar por nombre, empresa o código…" oninput="pintaClientes()" style="max-width:340px">
+        <div class="sp" style="flex:1"></div>
+        <button class="pri" onclick="editarCliente()">+ Nuevo cliente</button>
+      </div>
+      <table><thead><tr>
+        <th>Nombre</th><th>Empresa</th><th>Contacto</th><th>Código</th><th>Plan</th><th>Estado</th><th>Vence</th><th></th>
+      </tr></thead><tbody id="tbCli"></tbody></table>
+      <div id="vacioCli" class="vacio oculto">Aún no hay clientes. Pulsa «Nuevo cliente» para empezar.</div>
+    </div>
+    <div class="caja">
+      <h2>Cuentas sin registrar</h2>
+      <p class="msg">Equipos que ya usaron el plugin pero que aún no tienes guardados como cliente. Son posibles ventas.</p>
+      <table><thead><tr><th>Código de cuenta</th><th>Comandos usados</th><th>Último uso</th><th></th></tr></thead>
+      <tbody id="tbSin"></tbody></table>
+      <div id="vacioSin" class="vacio oculto">Nada por aquí.</div>
+    </div>
+  </main>
+
+  <!-- USO POR CUENTA -->
+  <main id="tab-uso" class="oculto">
+    <div class="caja">
+      <div class="fila">
+        <div><label>Elige una cuenta</label>
+          <select id="selCuenta" onchange="pintaUsoCuenta()"></select></div>
+      </div>
+      <div id="resCuenta" style="margin-top:16px"></div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div id="modalBg" class="oculto">
+  <div id="modal">
+    <h3 id="modTit">Cliente</h3>
+    <input type="hidden" id="cId">
+    <div class="fila">
+      <div><label>Nombre *</label><input id="cNombre"></div>
+      <div><label>Empresa</label><input id="cEmpresa"></div>
+    </div>
+    <div class="fila">
+      <div><label>Contacto (WhatsApp / correo)</label><input id="cContacto"></div>
+      <div><label>Código de cuenta</label><input id="cCodigo" placeholder="XXXX-XXXX-XXXX-XXXX"></div>
+    </div>
+    <div class="fila">
+      <div><label>Plan</label>
+        <select id="cPlan"><option value="">—</option><option>prueba</option><option>mensual</option><option>anual</option><option>perpetua</option></select></div>
+      <div><label>Estado</label>
+        <select id="cEstado"><option value="prospecto">prospecto</option><option value="cliente">cliente</option><option value="vencido">vencido</option></select></div>
+      <div><label>Vence</label><input id="cVence" type="date"></div>
+    </div>
+    <label>Notas</label><textarea id="cNotas" rows="2"></textarea>
+    <div id="modMsg" class="msg"></div>
+    <div class="modbot">
+      <button id="btnBorrar" class="peligro" onclick="borrarCliente()">Eliminar</button>
+      <div class="sp" style="flex:1"></div>
+      <button onclick="cerrarModal()">Cancelar</button>
+      <button class="pri" onclick="guardarCliente()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+if(typeof supabase==='undefined'){ document.getElementById('loginMsg').textContent='No se pudieron cargar las librerías (revisa tu internet y recarga).'; }
+const URL = "https://yfhaxghpxcfuqnufaijk.supabase.co";
+const KEY = "sb_publishable_iahwAYfBM0ADk4oKnKUkOQ_l3UMTq38";
+const sb = supabase.createClient(URL, KEY);
+
+let CLIENTES = [], USO = [], chartTop, chartDia;
+
+// ---------- sesión ----------
+async function arranque(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(session) mostrarApp(session);
+}
+async function entrar(){
+  const msg = document.getElementById('loginMsg'); msg.textContent='Entrando…';
+  try{
+    const email = document.getElementById('lemail').value.trim();
+    const password = document.getElementById('lpass').value;
+    const {data,error} = await sb.auth.signInWithPassword({email,password});
+    if(error){ msg.textContent = "No se pudo entrar: "+error.message; return; }
+    mostrarApp(data.session);
+  }catch(e){ msg.textContent = "Error de conexión: "+(e&&e.message||e); }
+}
+async function salir(){ await sb.auth.signOut(); location.reload(); }
+function mostrarApp(session){
+  document.getElementById('login').classList.add('oculto');
+  document.getElementById('app').classList.remove('oculto');
+  document.getElementById('quien').textContent = session.user.email;
+  cargarTodo();
+}
+function ir(t){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('act',b.dataset.tab===t));
+  ['resumen','clientes','uso'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('oculto',x!==t));
+}
+
+// ---------- carga ----------
+async function cargarTodo(){
+  const c = await sb.from('clientes').select('*').order('creado',{ascending:false});
+  CLIENTES = c.data||[];
+  const u = await sb.from('uso').select('*').order('creado',{ascending:false}).limit(20000);
+  USO = u.data||[];
+  pintaResumen(); pintaClientes(); pintaSinRegistrar(); llenaSelCuenta();
+}
+
+// ---------- resumen ----------
+function pintaResumen(){
+  const hoy = new Date().toISOString().slice(0,10);
+  const hace30 = new Date(Date.now()-30*864e5);
+  const activos = new Set(USO.filter(x=>new Date(x.creado)>=hace30).map(x=>x.codigo_pc));
+  const hoyN = USO.filter(x=>x.creado.slice(0,10)===hoy).length;
+  const kpis = [
+    ['Clientes', CLIENTES.filter(c=>c.estado==='cliente').length],
+    ['Prospectos', CLIENTES.filter(c=>c.estado==='prospecto').length],
+    ['Cuentas activas (30 d)', activos.size],
+    ['Comandos hoy', hoyN],
+    ['Comandos (total)', USO.length],
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k=>
+    `<div class="tarjeta"><div class="n">${k[1]}</div><div class="e">${k[0]}</div></div>`).join('');
+
+  // top comandos
+  const porCmd = cuenta(USO.map(x=>x.comando));
+  const top = porCmd.slice(0,15);
+  dibujaBarras('gTop', top.map(x=>x[0]), top.map(x=>x[1]), '#3ecf8e');
+
+  // por día
+  const dias = [], etq = [];
+  for(let i=29;i>=0;i--){ const d=new Date(Date.now()-i*864e5).toISOString().slice(0,10); etq.push(d.slice(5)); dias.push(USO.filter(x=>x.creado.slice(0,10)===d).length); }
+  dibujaLinea('gDia', etq, dias);
+
+  // cuentas más activas
+  const porCta = cuenta(USO.map(x=>x.codigo_pc)).slice(0,10);
+  const max = porCta.length?porCta[0][1]:1;
+  document.getElementById('topCuentas').innerHTML = porCta.length? porCta.map(x=>{
+    const cli = CLIENTES.find(c=>(c.codigo_pc||'').toUpperCase()===x[0].toUpperCase());
+    const nom = cli? cli.nombre : '<span style="color:var(--tenue)">sin registrar</span>';
+    return `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${nom} <span style="color:var(--tenue)">${x[0]}</span></span><b>${x[1]}</b></div><div class="barra"><i style="width:${Math.round(x[1]/max*100)}%"></i></div></div>`;
+  }).join('') : '<div class="vacio">Todavía no hay uso registrado.</div>';
+}
+
+// ---------- clientes ----------
+function pintaClientes(){
+  const q = (document.getElementById('buscaCli').value||'').toLowerCase();
+  const lista = CLIENTES.filter(c=>!q || [c.nombre,c.empresa,c.codigo_pc,c.contacto].some(v=>(v||'').toLowerCase().includes(q)));
+  document.getElementById('vacioCli').classList.toggle('oculto', CLIENTES.length>0);
+  document.getElementById('tbCli').innerHTML = lista.map(c=>{
+    const ch = c.estado==='cliente'?'cli':c.estado==='vencido'?'ven':'pro';
+    return `<tr>
+      <td>${esc(c.nombre)}</td><td>${esc(c.empresa)}</td><td>${esc(c.contacto)}</td>
+      <td style="font-family:Consolas,monospace">${esc(c.codigo_pc)}</td>
+      <td>${esc(c.plan)}</td><td><span class="chip ${ch}">${c.estado}</span></td>
+      <td>${c.vence||''}</td>
+      <td><button onclick='editarCliente(${JSON.stringify(c)})'>Editar</button></td></tr>`;
+  }).join('');
+}
+function pintaSinRegistrar(){
+  const regs = new Set(CLIENTES.map(c=>(c.codigo_pc||'').toUpperCase()).filter(Boolean));
+  const m = {};
+  USO.forEach(x=>{ const k=x.codigo_pc.toUpperCase(); if(regs.has(k))return; (m[k]=m[k]||{n:0,ult:x.creado}); m[k].n++; if(x.creado>m[k].ult)m[k].ult=x.creado; });
+  const filas = Object.entries(m).sort((a,b)=>b[1].n-a[1].n);
+  document.getElementById('vacioSin').classList.toggle('oculto', filas.length>0);
+  document.getElementById('tbSin').innerHTML = filas.map(([cod,v])=>
+    `<tr><td style="font-family:Consolas,monospace">${cod}</td><td>${v.n}</td><td>${v.ult.slice(0,10)}</td>
+     <td><button onclick="editarCliente({codigo_pc:'${cod}'})">Registrar</button></td></tr>`).join('');
+}
+
+// ---------- uso por cuenta ----------
+function llenaSelCuenta(){
+  const cods = [...new Set(USO.map(x=>x.codigo_pc))];
+  const sel = document.getElementById('selCuenta');
+  sel.innerHTML = '<option value="">— elige —</option>' + cods.map(c=>{
+    const cli = CLIENTES.find(x=>(x.codigo_pc||'').toUpperCase()===c.toUpperCase());
+    return `<option value="${c}">${cli?esc(cli.nombre)+' · ':''}${c}</option>`;
+  }).join('');
+}
+function pintaUsoCuenta(){
+  const cod = document.getElementById('selCuenta').value;
+  const cont = document.getElementById('resCuenta');
+  if(!cod){ cont.innerHTML=''; return; }
+  const filas = USO.filter(x=>x.codigo_pc===cod);
+  const porCmd = cuenta(filas.map(x=>x.comando));
+  const max = porCmd.length?porCmd[0][1]:1;
+  const ult = filas.length?filas[0].creado.slice(0,16).replace('T',' '):'—';
+  cont.innerHTML = `<p class="msg">${filas.length} comandos · último uso ${ult} · versión ${esc((filas[0]||{}).version)||'?'}</p>` +
+    porCmd.map(x=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(x[0])}</span><b>${x[1]}</b></div><div class="barra"><i style="width:${Math.round(x[1]/max*100)}%"></i></div></div>`).join('');
+}
+
+// ---------- modal cliente ----------
+function editarCliente(c){
+  c = c||{};
+  document.getElementById('modTit').textContent = c.id?'Editar cliente':'Nuevo cliente';
+  document.getElementById('cId').value = c.id||'';
+  document.getElementById('cNombre').value = c.nombre||'';
+  document.getElementById('cEmpresa').value = c.empresa||'';
+  document.getElementById('cContacto').value = c.contacto||'';
+  document.getElementById('cCodigo').value = c.codigo_pc||'';
+  document.getElementById('cPlan').value = c.plan||'';
+  document.getElementById('cEstado').value = c.estado||'prospecto';
+  document.getElementById('cVence').value = c.vence||'';
+  document.getElementById('cNotas').value = c.notas||'';
+  document.getElementById('btnBorrar').classList.toggle('oculto', !c.id);
+  document.getElementById('modMsg').textContent='';
+  document.getElementById('modalBg').classList.remove('oculto');
+}
+function cerrarModal(){ document.getElementById('modalBg').classList.add('oculto'); }
+async function guardarCliente(){
+  const reg = {
+    nombre:val('cNombre'), empresa:val('cEmpresa'), contacto:val('cContacto'),
+    codigo_pc:val('cCodigo').toUpperCase(), plan:val('cPlan')||null, estado:val('cEstado'),
+    vence:val('cVence')||null, notas:val('cNotas')
+  };
+  if(!reg.nombre){ document.getElementById('modMsg').textContent='El nombre es obligatorio.'; return; }
+  const id = val('cId');
+  const r = id ? await sb.from('clientes').update(reg).eq('id',id) : await sb.from('clientes').insert(reg);
+  if(r.error){ document.getElementById('modMsg').textContent='Error: '+r.error.message; return; }
+  cerrarModal(); cargarTodo();
+}
+async function borrarCliente(){
+  const id = val('cId'); if(!id) return;
+  if(!confirm('¿Eliminar este cliente? El registro de uso no se borra.')) return;
+  const r = await sb.from('clientes').delete().eq('id',id);
+  if(r.error){ document.getElementById('modMsg').textContent='Error: '+r.error.message; return; }
+  cerrarModal(); cargarTodo();
+}
+
+// ---------- utilidades ----------
+function cuenta(arr){ const m={}; arr.forEach(x=>m[x]=(m[x]||0)+1); return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
+function val(id){ return (document.getElementById(id).value||'').trim(); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+function dibujaBarras(id,labels,data,color){
+  if(chartTop&&id==='gTop'){chartTop.destroy();}
+  const ctx=document.getElementById(id);
+  const ch=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:color}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9a9a9a',maxRotation:60,minRotation:45}},y:{ticks:{color:'#9a9a9a'},grid:{color:'#333'}}}}});
+  if(id==='gTop')chartTop=ch;
+}
+function dibujaLinea(id,labels,data){
+  if(chartDia){chartDia.destroy();}
+  const ctx=document.getElementById(id);
+  chartDia=new Chart(ctx,{type:'line',data:{labels,datasets:[{data,borderColor:'#60a5fa',backgroundColor:'rgba(96,165,250,.15)',fill:true,tension:.3,pointRadius:2}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9a9a9a',maxRotation:0,autoSkip:true,maxTicksLimit:10}},y:{ticks:{color:'#9a9a9a'},grid:{color:'#333'},beginAtZero:true}}}});
+}
+
+document.getElementById('lpass').addEventListener('keydown',e=>{if(e.key==='Enter')entrar();});
+arranque();
+</script>
+</body>
+</html>
