@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel Herramientas PV</title>
+<link rel="icon" href="data:,">
+
 <style>
   :root{
     --bg:#1e1e1e; --panel:#252526; --panel2:#2d2d30; --entrada:#333337;
@@ -168,9 +170,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
 if(typeof supabase==='undefined'){ document.getElementById('loginMsg').textContent='No se pudieron cargar las librerías (revisa tu internet y recarga).'; }
-const URL = "https://yfhaxghpxcfuqnufaijk.supabase.co";
-const KEY = "sb_publishable_iahwAYfBM0ADk4oKnKUkOQ_l3UMTq38";
-const sb = supabase.createClient(URL, KEY);
+const SB_URL = "https://yfhaxghpxcfuqnufaijk.supabase.co";
+const SB_KEY = "sb_publishable_iahwAYfBM0ADk4oKnKUkOQ_l3UMTq38";
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
 let CLIENTES = [], USO = [], chartTop, chartDia;
 
