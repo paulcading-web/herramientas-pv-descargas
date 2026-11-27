@@ -87,8 +87,8 @@
 
   <div id="formCrear" class="oculto">
     <label>Nombre y apellido *</label><input id="rNombre" autocomplete="name">
+    <label>Celular (WhatsApp) *</label><input id="rContacto" inputmode="tel" autocomplete="tel" placeholder="Ej. +51 9XXXXXXXX">
     <label>Empresa (opcional)</label><input id="rEmpresa">
-    <label>WhatsApp o teléfono (opcional)</label><input id="rContacto">
   </div>
   <label>Correo</label>
   <input id="lemail" type="email" autocomplete="username">
@@ -392,9 +392,12 @@ async function entrar(){
 async function crear(){
   const msg=document.getElementById('loginMsg');
   const nombre=document.getElementById('rNombre').value.trim();
+  const celular=document.getElementById('rContacto').value.trim();
   const email=document.getElementById('lemail').value.trim();
   const password=document.getElementById('lpass').value;
   if(!nombre){ msg.textContent='Pon tu nombre.'; return; }
+  if(celular.replace(/\D/g,'').length<7){ msg.textContent='Pon un número de celular válido.'; return; }
+  if(!/^\S+@\S+\.\S+$/.test(email)){ msg.textContent='Pon un correo válido.'; return; }
   if(password.length<6){ msg.textContent='La contraseña debe tener al menos 6 caracteres.'; return; }
   msg.textContent='Creando cuenta…';
   try{
