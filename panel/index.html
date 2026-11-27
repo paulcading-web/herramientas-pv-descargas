@@ -302,6 +302,18 @@
   </div>
 </div>
 
+<!-- DIÁLOGO PROPIO (confirmar/avisar sin depender de los pop-ups del navegador) -->
+<div id="dlgBg" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:30;padding:16px">
+  <div style="background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:20px;max-width:560px;width:100%">
+    <div id="dlgMsg" style="white-space:pre-wrap;margin-bottom:12px"></div>
+    <div id="dlgLic" class="lic oculto" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="dlgNo" onclick="dlgResp(false)">Cancelar</button>
+      <button id="dlgSi" class="pri" onclick="dlgResp(true)">Aceptar</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
@@ -635,7 +647,7 @@ async function guardarCliente(){
 }
 async function borrarCliente(){
   const id=val('cId'); if(!id)return;
-  if(!confirm('¿Eliminar este cliente? El registro de uso no se borra.'))return;
+  if(!(await confirmar('¿Eliminar este cliente? El registro de uso no se borra.')))return;
   const r=await sb.from('clientes').delete().eq('id',id);
   if(r.error){document.getElementById('modMsg').textContent='Error: '+r.error.message;return;}
   cerrarModal(); cargarAdmin();
@@ -660,13 +672,13 @@ function pintaLicencias(){
 }
 function verLic(id){
   const l=LICS.find(x=>String(x.id)===String(id)); if(!l)return;
-  alert('Plan: '+(l.plan||'')+(l.vence?(' · vence '+l.vence):'')+(l.actualizaciones?(' · actualiz. hasta '+l.actualizaciones):'')+'\n\n'+l.texto);
+  avisar('Plan: '+(l.plan||'')+(l.vence?(' · vence '+l.vence):'')+(l.actualizaciones?(' · actualiz. hasta '+l.actualizaciones):''), l.texto);
 }
 async function cambiarEstado(id,nuevo){
   const verbo={pausada:'pausar',revocada:'REVOCAR (cortar)',activa:'reactivar'}[nuevo];
-  if(!confirm('¿Seguro que quieres '+verbo+' esta licencia?\nSurte efecto cuando el plugin del cliente valide en línea.')) return;
+  if(!(await confirmar('¿Seguro que quieres '+verbo+' esta licencia?\nSurte efecto cuando el plugin del cliente valide en línea (hasta ~3 min).'))) return;
   const r=await sb.from('licencias').update({estado:nuevo}).eq('id',id);
-  if(r.error){ alert('Error: '+r.error.message); return; }
+  if(r.error){ avisar('No se pudo cambiar: '+r.error.message); return; }
   cargarAdmin();
 }
 
@@ -753,6 +765,21 @@ async function guardarPerfil(){
 // ================= utilidades =================
 function cuenta(arr){const m={};arr.forEach(x=>m[x]=(m[x]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
 function val(id){return (document.getElementById(id).value||'').trim();}
+let _dlg=null;
+function confirmar(msg){ return new Promise(res=>{ _dlg=res;
+  document.getElementById('dlgMsg').textContent=msg;
+  document.getElementById('dlgLic').classList.add('oculto');
+  document.getElementById('dlgNo').classList.remove('oculto');
+  document.getElementById('dlgSi').textContent='Aceptar';
+  document.getElementById('dlgBg').classList.remove('oculto'); }); }
+function avisar(msg,lic){ return new Promise(res=>{ _dlg=res;
+  document.getElementById('dlgMsg').textContent=msg;
+  const l=document.getElementById('dlgLic');
+  if(lic){ l.textContent=lic; l.classList.remove('oculto'); } else l.classList.add('oculto');
+  document.getElementById('dlgNo').classList.add('oculto');
+  document.getElementById('dlgSi').textContent='Cerrar';
+  document.getElementById('dlgBg').classList.remove('oculto'); }); }
+function dlgResp(v){ document.getElementById('dlgBg').classList.add('oculto'); const r=_dlg; _dlg=null; if(r)r(v); }
 function esc(s){return (s==null?'':String(s)).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
 function dibujaBarras(id,labels,data,color){
   if(chartTop&&id==='gTop'){chartTop.destroy();}
