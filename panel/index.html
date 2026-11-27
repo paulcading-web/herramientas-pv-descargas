@@ -162,7 +162,7 @@
         <button class="pri" onclick="emitirDirecta()">+ Emitir licencia directa</button>
       </div>
       <p class="msg">Usa «Emitir licencia directa» para una venta por WhatsApp: escribes el nombre y el código que te pasó el cliente, firmas, y le envías el texto.</p>
-      <table><thead><tr><th>Fecha</th><th>Cliente</th><th>Código</th><th>Plan</th><th>Vence</th><th>Actualiz.</th><th></th></tr></thead>
+      <table><thead><tr><th>Fecha</th><th>Cliente</th><th>Código</th><th>Plan</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
       <tbody id="tbLic"></tbody></table>
       <div id="vacioLic" class="vacio oculto">Aún no has emitido licencias.</div>
     </div>
@@ -538,7 +538,7 @@ async function firmarYEmitir(){
   // guardar en licencias
   const solId=document.getElementById('eSolId').value;
   const userId=document.getElementById('eUserId').value;
-  const r=await sb.from('licencias').insert({user_id:userId||null,codigo_pc:pc,plan,texto,vence:vence||null,actualizaciones:actu||null});
+  const r=await sb.from('licencias').insert({user_id:userId||null,cliente,codigo_pc:pc,plan,texto,vence:vence||null,actualizaciones:actu||null});
   if(r.error){ sal.innerHTML='<span class="err">Firma OK pero no se pudo guardar: '+r.error.message+'</span>'; return; }
   if(solId) await sb.from('solicitudes').update({estado:'emitida'}).eq('id',solId);
   // reflejar en CRM (clientes)
@@ -646,14 +646,28 @@ function pintaLicencias(){
   document.getElementById('vacioLic').classList.toggle('oculto',LICS.length>0);
   document.getElementById('tbLic').innerHTML=LICS.map(l=>{
     const pf=perfilDe(l.user_id);
-    return `<tr><td>${(l.creado||'').slice(0,10)}</td><td>${esc(pf.nombre)}</td><td class="mono">${esc(l.codigo_pc)}</td>
-      <td>${esc(l.plan)}</td><td>${l.vence||'—'}</td><td>${l.actualizaciones||'—'}</td>
-      <td><button onclick="verLic('${l.id}')">Ver texto</button></td></tr>`;
+    const nom=l.cliente||pf.nombre||'—';
+    const est=l.estado||'activa';
+    const ch=est==='activa'?'emit':est==='pausada'?'pend':'rech';
+    let acc=`<button onclick="verLic('${l.id}')">Ver</button> `;
+    if(est==='activa') acc+=`<button onclick="cambiarEstado('${l.id}','pausada')">Pausar</button> <button class="peligro" onclick="cambiarEstado('${l.id}','revocada')">Revocar</button>`;
+    else if(est==='pausada') acc+=`<button class="pri" onclick="cambiarEstado('${l.id}','activa')">Reactivar</button> <button class="peligro" onclick="cambiarEstado('${l.id}','revocada')">Revocar</button>`;
+    else acc+=`<button class="pri" onclick="cambiarEstado('${l.id}','activa')">Reactivar</button>`;
+    return `<tr><td>${(l.creado||'').slice(0,10)}</td><td>${esc(nom)}</td><td class="mono">${esc(l.codigo_pc)}</td>
+      <td>${esc(l.plan)}</td><td>${l.vence||'—'}</td><td><span class="chip ${ch}">${est}</span></td>
+      <td style="white-space:nowrap">${acc}</td></tr>`;
   }).join('');
 }
 function verLic(id){
   const l=LICS.find(x=>String(x.id)===String(id)); if(!l)return;
-  alert(l.texto);
+  alert('Plan: '+(l.plan||'')+(l.vence?(' · vence '+l.vence):'')+(l.actualizaciones?(' · actualiz. hasta '+l.actualizaciones):'')+'\n\n'+l.texto);
+}
+async function cambiarEstado(id,nuevo){
+  const verbo={pausada:'pausar',revocada:'REVOCAR (cortar)',activa:'reactivar'}[nuevo];
+  if(!confirm('¿Seguro que quieres '+verbo+' esta licencia?\nSurte efecto cuando el plugin del cliente valide en línea.')) return;
+  const r=await sb.from('licencias').update({estado:nuevo}).eq('id',id);
+  if(r.error){ alert('Error: '+r.error.message); return; }
+  cargarAdmin();
 }
 
 // ================= ADMIN: uso por cuenta =================
@@ -692,7 +706,10 @@ async function cargarCliente(){
   const cl=document.getElementById('cliLic');
   if(lics.length){
     const last=lics[0];
-    cl.innerHTML=`<p>Plan <b>${esc(last.plan)}</b>${last.vence?(' · vence '+last.vence):' · sin vencimiento'} · PC <span class="mono">${esc(last.codigo_pc)}</span></p>
+    const est=last.estado||'activa';
+    const nota = est==='pausada' ? '<p class="warn">Tu licencia está <b>en pausa</b> temporalmente. Escríbeme para reactivarla.</p>'
+              : est==='revocada' ? '<p class="err">Tu licencia fue <b>anulada</b>. Escríbeme si crees que es un error.</p>' : '';
+    cl.innerHTML=nota+`<p>Plan <b>${esc(last.plan)}</b>${last.vence?(' · vence '+last.vence):' · sin vencimiento'} · PC <span class="mono">${esc(last.codigo_pc)}</span></p>
       <p class="msg">Copia este texto y pégalo en Civil 3D: <b>Cuenta → Mi Licencia → Activar</b>.</p>
       <div class="lic" id="licTxt">${esc(last.texto)}</div>
       <div style="margin-top:8px"><button class="pri" onclick="copiar(this,'${last.id}')">Copiar licencia</button></div>`;
