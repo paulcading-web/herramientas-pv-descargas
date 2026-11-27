@@ -156,7 +156,12 @@
 
   <main id="tab-licencias" class="oculto">
     <div class="caja">
-      <h2>Licencias emitidas</h2>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <h2 style="margin:0">Licencias emitidas</h2>
+        <div class="sp" style="flex:1"></div>
+        <button class="pri" onclick="emitirDirecta()">+ Emitir licencia directa</button>
+      </div>
+      <p class="msg">Usa «Emitir licencia directa» para una venta por WhatsApp: escribes el nombre y el código que te pasó el cliente, firmas, y le envías el texto.</p>
       <table><thead><tr><th>Fecha</th><th>Cliente</th><th>Código</th><th>Plan</th><th>Vence</th><th>Actualiz.</th><th></th></tr></thead>
       <tbody id="tbLic"></tbody></table>
       <div id="vacioLic" class="vacio oculto">Aún no has emitido licencias.</div>
@@ -496,6 +501,18 @@ function abrirEmit(s){
   pintaEstadoClaveEmit();
   document.getElementById('emitBg').classList.remove('oculto');
 }
+function emitirDirecta(){
+  document.getElementById('eSolId').value='';
+  document.getElementById('eUserId').value='';
+  document.getElementById('eCliente').value='';
+  document.getElementById('eCodigo').value='';
+  document.getElementById('ePlan').value='anual';
+  document.getElementById('eVence').value='';
+  document.getElementById('eActu').value='';
+  document.getElementById('eSalida').innerHTML='<p class="msg">Venta directa: la licencia no quedará ligada a una cuenta del portal. Cópiala y envíasela al cliente.</p>';
+  pintaEstadoClaveEmit();
+  document.getElementById('emitBg').classList.remove('oculto');
+}
 function cerrarEmit(){ document.getElementById('emitBg').classList.add('oculto'); }
 function pintaEstadoClaveEmit(){
   const e=document.getElementById('eClaveEstado');
@@ -521,7 +538,7 @@ async function firmarYEmitir(){
   // guardar en licencias
   const solId=document.getElementById('eSolId').value;
   const userId=document.getElementById('eUserId').value;
-  const r=await sb.from('licencias').insert({user_id:userId,codigo_pc:pc,plan,texto,vence:vence||null,actualizaciones:actu||null});
+  const r=await sb.from('licencias').insert({user_id:userId||null,codigo_pc:pc,plan,texto,vence:vence||null,actualizaciones:actu||null});
   if(r.error){ sal.innerHTML='<span class="err">Firma OK pero no se pudo guardar: '+r.error.message+'</span>'; return; }
   if(solId) await sb.from('solicitudes').update({estado:'emitida'}).eq('id',solId);
   // reflejar en CRM (clientes)
