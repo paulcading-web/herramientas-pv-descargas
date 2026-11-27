@@ -1,7 +1,7 @@
 {
-  "version": "1.0.92",
+  "version": "1.0.93",
   "fecha": "2026-11-26",
-  "msi": "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.92.msi",
-  "sha256": "f374a68c9caf6beae3636d310aae11e3a868174466d98efdb3299f1148cd9a9d",
-  "notas": "Solicitar licencia por WhatsApp desde Mi Licencia."
+  "msi": "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.93.msi",
+  "sha256": "507042f65f23e215ecaee6fba0d27dfcbd14c95fdfd595a0db28af86eb8726c4",
+  "notas": "Panel de uso: el plugin comparte que comandos se usan (no tus dibujos)."
 }
