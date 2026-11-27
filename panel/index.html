@@ -494,7 +494,7 @@ function pintaSolicitudes(){
   }).join('');
 }
 async function rechazar(id){
-  if(!confirm('¿Rechazar esta solicitud?')) return;
+  if(!(await confirmar('¿Rechazar esta solicitud?'))) return;
   await sb.from('solicitudes').update({estado:'rechazada'}).eq('id',id);
   cargarAdmin();
 }
