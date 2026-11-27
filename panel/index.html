@@ -706,6 +706,8 @@ function pintaUsoCuenta(){
 // ================= CLIENTE =================
 async function cargarCliente(){
   document.getElementById('dlMsi').href=MSI_URL;
+  const _cod=new URLSearchParams(location.search).get('cod');
+  if(_cod) document.getElementById('sCodigo').value=_cod.toUpperCase();
   document.getElementById('pNombre').value=PERFIL.nombre||'';
   document.getElementById('pEmpresa').value=PERFIL.empresa||'';
   document.getElementById('pContacto').value=PERFIL.contacto||'';
