@@ -80,21 +80,29 @@
 <div id="login">
   <h1>⬤ Herramientas PV</h1>
   <p id="loginSub">Entra o crea tu cuenta para solicitar tu licencia.</p>
-  <div class="tog">
-    <button id="tEntrar" class="act" onclick="modo('entrar')">Entrar</button>
-    <button id="tCrear" onclick="modo('crear')">Crear cuenta</button>
-  </div>
+  <div id="credBox">
+    <div class="tog">
+      <button id="tEntrar" class="act" onclick="modo('entrar')">Entrar</button>
+      <button id="tCrear" onclick="modo('crear')">Crear cuenta</button>
+    </div>
 
-  <div id="formCrear" class="oculto">
-    <label>Nombre y apellido *</label><input id="rNombre" autocomplete="name">
-    <label>Celular (WhatsApp) *</label><input id="rContacto" inputmode="tel" autocomplete="tel" placeholder="Ej. +51 9XXXXXXXX">
-    <label>Empresa (opcional)</label><input id="rEmpresa">
+    <div id="formCrear" class="oculto">
+      <label>Nombre y apellido *</label><input id="rNombre" autocomplete="name">
+      <label>Celular (WhatsApp) *</label><input id="rContacto" inputmode="tel" autocomplete="tel" placeholder="Ej. +51 9XXXXXXXX">
+      <label>Empresa (opcional)</label><input id="rEmpresa">
+    </div>
+    <label>Correo</label>
+    <input id="lemail" type="email" autocomplete="username">
+    <label>Contraseña</label>
+    <input id="lpass" type="password" autocomplete="current-password">
+    <div style="margin-top:16px"><button class="pri" style="width:100%" id="btnAccion" onclick="accion()">Entrar</button></div>
   </div>
-  <label>Correo</label>
-  <input id="lemail" type="email" autocomplete="username">
-  <label>Contraseña</label>
-  <input id="lpass" type="password" autocomplete="current-password">
-  <div style="margin-top:16px"><button class="pri" style="width:100%" id="btnAccion" onclick="accion()">Entrar</button></div>
+  <div id="mfaBox" class="oculto">
+    <p class="msg">Verificación en 2 pasos</p>
+    <label>Código de tu app de autenticación</label>
+    <input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+    <div style="margin-top:12px"><button class="pri" style="width:100%" onclick="verificarMfa()">Verificar</button></div>
+  </div>
   <div id="loginMsg"></div>
 </div>
 
@@ -113,6 +121,7 @@
     <button data-tab="licencias" onclick="ir('licencias')">Licencias</button>
     <button data-tab="uso" onclick="ir('uso')">Uso por cuenta</button>
     <button data-tab="firma" onclick="ir('firma')">Clave de firma</button>
+    <button data-tab="seguridad" onclick="ir('seguridad')">Seguridad</button>
   </nav>
 
   <main id="tab-resumen">
@@ -195,6 +204,15 @@
       <p class="msg">Solo si quieres reemplazar la clave actual. Genera un par nuevo: descargas la privada (guárdala a salvo) y me pasas la pública para ponerla en el plugin. <b>Requiere recompilar el plugin</b> y que tú vuelvas a activar tu licencia.</p>
       <button onclick="generarClaveNueva()">Generar clave nueva</button>
       <div id="nuevaClave" style="margin-top:12px"></div>
+    </div>
+  </main>
+
+  <main id="tab-seguridad" class="oculto">
+    <div class="caja">
+      <h2>Verificación en 2 pasos de tu portal</h2>
+      <p class="msg">Añade un segundo paso para entrar a tu portal de admin: además de tu contraseña, te pedirá un código de tu app de autenticación. Protege el acceso a tus clientes y licencias.</p>
+      <div id="segEstado"></div>
+      <div id="segBox" style="margin-top:12px"></div>
     </div>
   </main>
 </div>
@@ -377,7 +395,15 @@ function modo(m){ MODO=m;
 async function accion(){ return MODO==='crear'? crear() : entrar(); }
 
 async function arranque(){
-  try{ const {data:{session}}=await sb.auth.getSession(); if(session) return rutear(session); }catch(e){}
+  try{
+    const {data:{session}}=await sb.auth.getSession(); if(!session) return;
+    if(await requiereMfa()){ mostrarMfa(); return; }
+    rutear(session);
+  }catch(e){}
+}
+async function requiereMfa(){
+  try{ const {data:aal}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    return !!(aal && aal.nextLevel==='aal2' && aal.currentLevel!=='aal2'); }catch(e){ return false; }
 }
 async function entrar(){
   const msg=document.getElementById('loginMsg'); msg.textContent='Entrando…';
@@ -386,8 +412,30 @@ async function entrar(){
     const password=document.getElementById('lpass').value;
     const {data,error}=await sb.auth.signInWithPassword({email,password});
     if(error){ msg.textContent='No se pudo entrar: '+error.message; return; }
+    if(await requiereMfa()){ msg.textContent=''; mostrarMfa(); return; }
     rutear(data.session);
   }catch(e){ msg.textContent='Error de conexión: '+(e&&e.message||e); }
+}
+function mostrarMfa(){
+  document.getElementById('credBox').classList.add('oculto');
+  document.getElementById('mfaBox').classList.remove('oculto');
+  const c=document.getElementById('mfaCode'); c.value=''; c.focus();
+}
+async function verificarMfa(){
+  const msg=document.getElementById('loginMsg'); msg.textContent='Verificando…';
+  try{
+    const code=document.getElementById('mfaCode').value.trim();
+    const {data:fl,error:ef}=await sb.auth.mfa.listFactors();
+    if(ef){ msg.textContent='Error: '+ef.message; return; }
+    const totp=(fl.totp||[]).find(f=>f.status==='verified')||(fl.totp||[])[0];
+    if(!totp){ msg.textContent='No hay un 2º factor configurado.'; return; }
+    const {data:ch,error:e1}=await sb.auth.mfa.challenge({factorId:totp.id});
+    if(e1){ msg.textContent='Error: '+e1.message; return; }
+    const {error:e2}=await sb.auth.mfa.verify({factorId:totp.id,challengeId:ch.id,code});
+    if(e2){ msg.textContent='Código incorrecto, intenta de nuevo.'; return; }
+    const {data:{session}}=await sb.auth.getSession();
+    msg.textContent=''; rutear(session);
+  }catch(e){ msg.textContent='Error: '+(e&&e.message||e); }
 }
 async function crear(){
   const msg=document.getElementById('loginMsg');
@@ -442,7 +490,8 @@ async function cargarAdmin(){
 }
 function ir(t){
   document.querySelectorAll('#appAdmin nav button').forEach(b=>b.classList.toggle('act',b.dataset.tab===t));
-  ['resumen','solicitudes','clientes','licencias','uso','firma'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('oculto',x!==t));
+  ['resumen','solicitudes','clientes','licencias','uso','firma','seguridad'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('oculto',x!==t));
+  if(t==='seguridad') pintarSeguridad();
 }
 function perfilDe(uid){ return PERFILES.find(p=>p.user_id===uid)||{}; }
 
@@ -601,6 +650,52 @@ async function generarClaveNueva(){
     <a class="pri" style="display:inline-block;padding:7px 12px;border-radius:6px;text-decoration:none" href="${url}" download="HerramientasPV-CLAVE-PRIVADA-nueva.pem">Descargar clave privada</a>
     <p class="msg" style="margin-top:12px">2) Pásame esta clave pública para ponerla en el plugin (hay que recompilar):</p>
     <div class="lic">${pubB64}</div>`;
+}
+
+// ================= ADMIN: seguridad (2 pasos) =================
+let _factorId=null;
+async function pintarSeguridad(){
+  const est=document.getElementById('segEstado'); const box=document.getElementById('segBox'); box.innerHTML='';
+  const {data,error}=await sb.auth.mfa.listFactors();
+  if(error){ est.innerHTML='<span class="err">'+error.message+'</span>'; return; }
+  const verif=(data.totp||[]).filter(f=>f.status==='verified');
+  if(verif.length){
+    est.innerHTML='<p class="ok">✓ Tu portal pide un 2º paso al entrar.</p>';
+    box.innerHTML="<button class=\"peligro\" onclick=\"quitarMfa('"+verif[0].id+"')\">Quitar 2 pasos</button>";
+  } else {
+    est.innerHTML='<p class="warn">El 2º paso no está activado.</p>';
+    box.innerHTML='<button class="pri" onclick="enrolarMfa()">Activar 2 pasos</button>';
+  }
+}
+async function enrolarMfa(){
+  const box=document.getElementById('segBox'); box.innerHTML='<p class="msg">Generando…</p>';
+  try{ const {data:fl}=await sb.auth.mfa.listFactors(); for(const f of (fl.all||[])) if(f.status!=='verified') await sb.auth.mfa.unenroll({factorId:f.id}); }catch(e){}
+  const {data,error}=await sb.auth.mfa.enroll({factorType:'totp',friendlyName:'Portal '+new Date().toISOString().slice(0,16)});
+  if(error){ box.innerHTML='<span class="err">'+error.message+'</span>'; return; }
+  _factorId=data.id;
+  const qr=data.totp.qr_code||''; const qrHtml=qr.trim().startsWith('<svg')?qr:'<img alt="QR" src="'+qr+'" style="width:180px;height:180px">';
+  box.innerHTML='<p class="msg">1) Escanea este código con tu app de autenticación:</p>'
+    +'<div style="background:#fff;display:inline-block;padding:8px;border-radius:8px">'+qrHtml+'</div>'
+    +'<p class="msg" style="margin-top:8px">2) Escribe el código de 6 dígitos:</p>'
+    +'<div class="fila"><div style="max-width:160px"><input id="segCode" inputmode="numeric" maxlength="6" placeholder="000000"></div>'
+    +'<button class="pri" onclick="activarMfa()">Activar</button></div><div id="segMsg" class="msg"></div>';
+}
+async function activarMfa(){
+  const m=document.getElementById('segMsg'); m.textContent='Activando…';
+  try{
+    const code=document.getElementById('segCode').value.trim();
+    const {data:ch,error:e1}=await sb.auth.mfa.challenge({factorId:_factorId});
+    if(e1){ m.innerHTML='<span class="err">'+e1.message+'</span>'; return; }
+    const {error:e2}=await sb.auth.mfa.verify({factorId:_factorId,challengeId:ch.id,code});
+    if(e2){ m.innerHTML='<span class="err">Código incorrecto, revisa e intenta de nuevo.</span>'; return; }
+    pintarSeguridad();
+  }catch(e){ m.innerHTML='<span class="err">'+(e&&e.message||e)+'</span>'; }
+}
+async function quitarMfa(id){
+  if(!(await confirmar('¿Quitar el 2º paso de tu portal? Volverás a entrar solo con tu contraseña.'))) return;
+  const {error}=await sb.auth.mfa.unenroll({factorId:id});
+  if(error){ avisar('No se pudo quitar: '+error.message); return; }
+  pintarSeguridad();
 }
 
 // ================= ADMIN: clientes =================
