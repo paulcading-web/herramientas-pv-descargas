@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel Herramientas PV</title>
+<title>Portal Herramientas PV</title>
 <link rel="icon" href="data:,">
 
 <style>
@@ -23,20 +23,24 @@
   input,select,textarea{font:inherit;background:var(--entrada);color:var(--texto);border:1px solid var(--borde);border-radius:6px;padding:7px 9px;width:100%}
   label{display:block;font-size:12px;color:var(--tenue);margin:8px 0 3px}
   .oculto{display:none!important}
+  code,.mono{font-family:Consolas,monospace}
   /* login */
-  #login{max-width:360px;margin:12vh auto;background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:28px}
+  #login{max-width:380px;margin:9vh auto;background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:28px}
   #login h1{font-size:20px;margin:0 0 4px}
   #login p{color:var(--tenue);margin:0 0 18px;font-size:13px}
-  #loginMsg{color:var(--rojo);font-size:13px;min-height:18px;margin-top:10px}
+  #loginMsg{color:var(--ambar);font-size:13px;min-height:18px;margin-top:10px}
+  .tog{display:flex;gap:6px;margin-bottom:16px;background:var(--panel2);border:1px solid var(--borde);border-radius:8px;padding:4px}
+  .tog button{flex:1;border:none;background:none;border-radius:6px;color:var(--tenue);padding:7px}
+  .tog button.act{background:var(--entrada);color:var(--texto)}
   /* app */
   header{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--borde);background:var(--panel)}
   header h1{font-size:16px;margin:0;font-weight:600}
   header .sp{flex:1}
   header .quien{color:var(--tenue);font-size:12px}
-  nav{display:flex;gap:4px;padding:10px 20px 0}
+  nav{display:flex;gap:4px;padding:10px 20px 0;flex-wrap:wrap}
   nav button{border:none;background:none;color:var(--tenue);border-bottom:2px solid transparent;border-radius:0;padding:8px 14px}
   nav button.act{color:var(--texto);border-bottom-color:var(--verde)}
-  main{padding:20px;max-width:1100px}
+  main{padding:20px;max-width:1100px;margin:0 auto}
   .tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
   .tarjeta{background:var(--panel);border:1px solid var(--borde);border-radius:10px;padding:14px 16px}
   .tarjeta .n{font-size:26px;font-weight:700}
@@ -51,15 +55,20 @@
   .chip.cli{color:var(--verde);border-color:#2a5a44}
   .chip.pro{color:var(--ambar);border-color:#5a4a1a}
   .chip.ven{color:var(--rojo);border-color:#5a2a2a}
+  .chip.pend{color:var(--ambar);border-color:#5a4a1a}
+  .chip.emit{color:var(--verde);border-color:#2a5a44}
+  .chip.rech{color:var(--rojo);border-color:#5a2a2a}
   .fila{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
   .fila>div{flex:1;min-width:140px}
   .barra{height:10px;background:var(--entrada);border-radius:5px;overflow:hidden}
   .barra>i{display:block;height:100%;background:var(--verde)}
   canvas{max-width:100%}
+  .lic{background:#111;border:1px solid var(--borde);border-radius:8px;padding:10px;font-family:Consolas,monospace;font-size:12px;word-break:break-all;color:#c7f9e5}
+  .ok{color:var(--verde)} .warn{color:var(--ambar)} .err{color:var(--rojo)}
   /* modal */
-  #modalBg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:10}
-  #modal{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:22px;width:420px;max-width:92vw}
-  #modal h3{margin:0 0 10px;font-size:16px}
+  #modalBg,#emitBg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:10;padding:16px}
+  #modal,#emit{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:22px;width:460px;max-width:96vw;max-height:92vh;overflow:auto}
+  #modal h3,#emit h3{margin:0 0 10px;font-size:16px}
   .modbot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
   .msg{font-size:12px;color:var(--tenue);min-height:16px}
   .vacio{color:var(--tenue);text-align:center;padding:30px}
@@ -67,33 +76,45 @@
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- ======================= LOGIN / REGISTRO ======================= -->
 <div id="login">
-  <h1>Panel Herramientas PV</h1>
-  <p>Entra con tu correo y contraseña de Supabase.</p>
+  <h1>⬤ Herramientas PV</h1>
+  <p id="loginSub">Entra o crea tu cuenta para solicitar tu licencia.</p>
+  <div class="tog">
+    <button id="tEntrar" class="act" onclick="modo('entrar')">Entrar</button>
+    <button id="tCrear" onclick="modo('crear')">Crear cuenta</button>
+  </div>
+
+  <div id="formCrear" class="oculto">
+    <label>Nombre y apellido *</label><input id="rNombre" autocomplete="name">
+    <label>Empresa (opcional)</label><input id="rEmpresa">
+    <label>WhatsApp o teléfono (opcional)</label><input id="rContacto">
+  </div>
   <label>Correo</label>
   <input id="lemail" type="email" autocomplete="username">
   <label>Contraseña</label>
   <input id="lpass" type="password" autocomplete="current-password">
-  <div style="margin-top:16px"><button class="pri" style="width:100%" onclick="entrar()">Entrar</button></div>
+  <div style="margin-top:16px"><button class="pri" style="width:100%" id="btnAccion" onclick="accion()">Entrar</button></div>
   <div id="loginMsg"></div>
 </div>
 
-<!-- APP -->
-<div id="app" class="oculto">
+<!-- ======================= APP ADMIN ======================= -->
+<div id="appAdmin" class="oculto">
   <header>
-    <h1>⬤ Herramientas PV</h1>
+    <h1>⬤ Herramientas PV · Admin</h1>
     <div class="sp"></div>
-    <span class="quien" id="quien"></span>
+    <span class="quien" id="quienA"></span>
     <button onclick="salir()">Salir</button>
   </header>
   <nav>
     <button class="act" data-tab="resumen" onclick="ir('resumen')">Resumen</button>
+    <button data-tab="solicitudes" onclick="ir('solicitudes')">Solicitudes <span id="badgeSol"></span></button>
     <button data-tab="clientes" onclick="ir('clientes')">Clientes</button>
+    <button data-tab="licencias" onclick="ir('licencias')">Licencias</button>
     <button data-tab="uso" onclick="ir('uso')">Uso por cuenta</button>
+    <button data-tab="firma" onclick="ir('firma')">Clave de firma</button>
   </nav>
 
-  <!-- RESUMEN -->
   <main id="tab-resumen">
     <div class="tarjetas" id="kpis"></div>
     <div class="caja"><h2>Comandos más usados</h2><canvas id="gTop" height="110"></canvas></div>
@@ -101,7 +122,17 @@
     <div class="caja"><h2>Cuentas más activas</h2><div id="topCuentas"></div></div>
   </main>
 
-  <!-- CLIENTES -->
+  <main id="tab-solicitudes" class="oculto">
+    <div class="caja">
+      <h2>Solicitudes de licencia</h2>
+      <p class="msg">Lo que piden tus clientes desde su portal. Emite la licencia firmada o recházala.</p>
+      <table><thead><tr>
+        <th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Código</th><th>Plan</th><th>Estado</th><th></th>
+      </tr></thead><tbody id="tbSol"></tbody></table>
+      <div id="vacioSol" class="vacio oculto">No hay solicitudes todavía.</div>
+    </div>
+  </main>
+
   <main id="tab-clientes" class="oculto">
     <div class="caja">
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
@@ -123,7 +154,15 @@
     </div>
   </main>
 
-  <!-- USO POR CUENTA -->
+  <main id="tab-licencias" class="oculto">
+    <div class="caja">
+      <h2>Licencias emitidas</h2>
+      <table><thead><tr><th>Fecha</th><th>Cliente</th><th>Código</th><th>Plan</th><th>Vence</th><th>Actualiz.</th><th></th></tr></thead>
+      <tbody id="tbLic"></tbody></table>
+      <div id="vacioLic" class="vacio oculto">Aún no has emitido licencias.</div>
+    </div>
+  </main>
+
   <main id="tab-uso" class="oculto">
     <div class="caja">
       <div class="fila">
@@ -133,9 +172,76 @@
       <div id="resCuenta" style="margin-top:16px"></div>
     </div>
   </main>
+
+  <main id="tab-firma" class="oculto">
+    <div class="caja">
+      <h2>Clave de firma de licencias</h2>
+      <p class="msg">La clave privada firma las licencias. <b>Nunca se guarda</b> en esta página ni en la base de datos: la cargas de tu archivo cuando vas a emitir, y queda solo en memoria mientras el portal está abierto.</p>
+      <div class="fila">
+        <div style="flex:2">
+          <label>Cargar tu clave privada (archivo .txt / .pem / .json)</label>
+          <input type="file" id="archClave" onchange="cargarClaveArchivo(this)">
+        </div>
+      </div>
+      <div id="estadoClave" class="msg" style="margin-top:10px"></div>
+    </div>
+    <div class="caja">
+      <h2>Avanzado · Generar una clave nueva</h2>
+      <p class="msg">Solo si quieres reemplazar la clave actual. Genera un par nuevo: descargas la privada (guárdala a salvo) y me pasas la pública para ponerla en el plugin. <b>Requiere recompilar el plugin</b> y que tú vuelvas a activar tu licencia.</p>
+      <button onclick="generarClaveNueva()">Generar clave nueva</button>
+      <div id="nuevaClave" style="margin-top:12px"></div>
+    </div>
+  </main>
 </div>
 
-<!-- MODAL CLIENTE -->
+<!-- ======================= ZONA CLIENTE ======================= -->
+<div id="appCliente" class="oculto">
+  <header>
+    <h1>⬤ Herramientas PV</h1>
+    <div class="sp"></div>
+    <span class="quien" id="quienC"></span>
+    <button onclick="salir()">Salir</button>
+  </header>
+  <main>
+    <div class="caja">
+      <h2>Mi licencia</h2>
+      <div id="cliLic"></div>
+    </div>
+
+    <div class="caja">
+      <h2>Solicitar una licencia</h2>
+      <p class="msg">Abre Civil 3D → cinta <b>Cuenta → Mi Licencia</b> y copia tu <b>Código de solicitud</b>. Pégalo aquí y elige el plan.</p>
+      <div class="fila">
+        <div><label>Código de solicitud (XXXX-XXXX-XXXX-XXXX)</label><input id="sCodigo" class="mono" placeholder="XXXX-XXXX-XXXX-XXXX"></div>
+        <div style="max-width:170px"><label>Plan</label>
+          <select id="sPlan"><option value="prueba">prueba</option><option value="mensual">mensual</option><option value="anual">anual</option><option value="perpetua">perpetua</option></select></div>
+      </div>
+      <label>Mensaje (opcional)</label><textarea id="sNota" rows="2" placeholder="Algo que quieras decirme…"></textarea>
+      <div style="margin-top:12px"><button class="pri" onclick="enviarSolicitud()">Enviar solicitud</button>
+        <a id="waLink" href="#" target="_blank" style="margin-left:10px">o avísame por WhatsApp</a></div>
+      <div id="solMsg" class="msg" style="margin-top:8px"></div>
+      <div id="misSol" style="margin-top:14px"></div>
+    </div>
+
+    <div class="caja">
+      <h2>Mis datos</h2>
+      <div class="fila">
+        <div><label>Nombre</label><input id="pNombre"></div>
+        <div><label>Empresa</label><input id="pEmpresa"></div>
+        <div><label>Contacto</label><input id="pContacto"></div>
+      </div>
+      <div style="margin-top:10px"><button onclick="guardarPerfil()">Guardar datos</button> <span id="perfMsg" class="msg"></span></div>
+    </div>
+
+    <div class="caja">
+      <h2>Descargar el plugin</h2>
+      <p class="msg">Instalador de Herramientas PV para Civil 3D 2027. La prueba gratuita dura 15 días.</p>
+      <a id="dlMsi" href="#" class="pri" style="display:inline-block;padding:8px 14px;border-radius:6px;text-decoration:none">Descargar instalador</a>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL CLIENTE (admin) -->
 <div id="modalBg" class="oculto">
   <div id="modal">
     <h3 id="modTit">Cliente</h3>
@@ -166,6 +272,31 @@
   </div>
 </div>
 
+<!-- MODAL EMISIÓN (admin) -->
+<div id="emitBg" class="oculto">
+  <div id="emit">
+    <h3>Emitir licencia</h3>
+    <input type="hidden" id="eSolId"><input type="hidden" id="eUserId">
+    <div class="fila">
+      <div><label>Cliente</label><input id="eCliente"></div>
+      <div><label>Código de PC</label><input id="eCodigo" class="mono"></div>
+    </div>
+    <div class="fila">
+      <div><label>Plan</label>
+        <select id="ePlan"><option>prueba</option><option>mensual</option><option>anual</option><option>perpetua</option></select></div>
+      <div><label>Vence (vacío = sin vencimiento)</label><input id="eVence" type="date"></div>
+      <div><label>Actualizaciones hasta</label><input id="eActu" type="date"></div>
+    </div>
+    <div class="msg" id="eClaveEstado" style="margin-top:8px"></div>
+    <div id="eSalida" style="margin-top:10px"></div>
+    <div class="modbot">
+      <div class="sp" style="flex:1"></div>
+      <button onclick="cerrarEmit()">Cancelar</button>
+      <button class="pri" id="btnFirmar" onclick="firmarYEmitir()">Firmar y emitir</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
@@ -174,184 +305,432 @@ const SB_URL = "https://yfhaxghpxcfuqnufaijk.supabase.co";
 const SB_KEY = "sb_publishable_iahwAYfBM0ADk4oKnKUkOQ_l3UMTq38";
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-let CLIENTES = [], USO = [], chartTop, chartDia;
+const MSI_URL = "https://raw.githubusercontent.com/paulcading-web/herramientas-pv-descargas/main/HerramientasPV-1.0.93.msi";
+const WA_NUM = "51941822864";
+// Clave pública ACTUAL embebida en el plugin (F98BFEFF). Sirve para comprobar que la privada que cargas corresponde al plugin instalado.
+let CLAVE_PUBLICA_ACTUAL = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEho+N+NeVvFrKxnW7RLHcQbSYeskXfWpr7zxvJXRFs4ZISQY521DeJiy6LhchNBUqI92lXcPXIJwh8piCist7+w==";
 
-// ---------- sesión ----------
+let CLIENTES=[], USO=[], SOL=[], PERFILES=[], LICS=[], chartTop, chartDia;
+let PERFIL=null, ES_ADMIN=false;
+let CLAVE_PRIV=null;      // CryptoKey privada en memoria (nunca se guarda)
+let CLAVE_COINCIDE=false; // la privada cargada corresponde a la pública del plugin
+
+// ================= utilidades cripto =================
+function b64uFromBytes(bytes){ let b=''; const a=new Uint8Array(bytes); for(let i=0;i<a.length;i++)b+=String.fromCharCode(a[i]); return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function bytesFromB64(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='='; const bin=atob(s); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i); return a; }
+function asciiBytes(s){ const a=new Uint8Array(s.length); for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i)&0xff; return a; }
+function pemToDer(pem){ const b=pem.replace(/-----[^-]+-----/g,'').replace(/\s+/g,''); return bytesFromB64(b); }
+
+async function importarPrivada(txt){
+  txt=(txt||'').trim();
+  // 1) JWK
+  if(txt[0]==='{'){ const jwk=JSON.parse(txt); return crypto.subtle.importKey('jwk',jwk,{name:'ECDSA',namedCurve:'P-256'},true,['sign']); }
+  // 2) PKCS#8 PEM
+  if(/BEGIN PRIVATE KEY/.test(txt)){ return crypto.subtle.importKey('pkcs8',pemToDer(txt),{name:'ECDSA',namedCurve:'P-256'},true,['sign']); }
+  // 3) EC PRIVATE KEY (SEC1) — WebCrypto no lo admite directo
+  if(/BEGIN EC PRIVATE KEY/.test(txt)){ throw new Error('SEC1'); }
+  // 4) base64 suelto -> probar pkcs8
+  return crypto.subtle.importKey('pkcs8',bytesFromB64(txt),{name:'ECDSA',namedCurve:'P-256'},true,['sign']);
+}
+async function coincideConPublica(priv, pubB64){
+  try{
+    const pub=await crypto.subtle.importKey('spki',bytesFromB64(pubB64),{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
+    const prueba=asciiBytes('prueba-'+Date.now());
+    const sig=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},priv,prueba);
+    return await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},pub,sig,prueba);
+  }catch(e){ return false; }
+}
+async function firmarLicencia(priv, obj){
+  const json=JSON.stringify(obj);
+  const payload='PV1.'+b64uFromBytes(new TextEncoder().encode(json));
+  const sig=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},priv,asciiBytes(payload));
+  return payload+'.'+b64uFromBytes(new Uint8Array(sig));
+}
+
+// ================= sesión / ruteo =================
+let MODO='entrar';
+function modo(m){ MODO=m;
+  document.getElementById('tEntrar').classList.toggle('act',m==='entrar');
+  document.getElementById('tCrear').classList.toggle('act',m==='crear');
+  document.getElementById('formCrear').classList.toggle('oculto',m!=='crear');
+  document.getElementById('btnAccion').textContent = m==='crear'?'Crear cuenta':'Entrar';
+  document.getElementById('lpass').setAttribute('autocomplete', m==='crear'?'new-password':'current-password');
+  document.getElementById('loginMsg').textContent='';
+}
+async function accion(){ return MODO==='crear'? crear() : entrar(); }
+
 async function arranque(){
-  const {data:{session}} = await sb.auth.getSession();
-  if(session) mostrarApp(session);
+  try{ const {data:{session}}=await sb.auth.getSession(); if(session) return rutear(session); }catch(e){}
 }
 async function entrar(){
-  const msg = document.getElementById('loginMsg'); msg.textContent='Entrando…';
+  const msg=document.getElementById('loginMsg'); msg.textContent='Entrando…';
   try{
-    const email = document.getElementById('lemail').value.trim();
-    const password = document.getElementById('lpass').value;
-    const {data,error} = await sb.auth.signInWithPassword({email,password});
-    if(error){ msg.textContent = "No se pudo entrar: "+error.message; return; }
-    mostrarApp(data.session);
-  }catch(e){ msg.textContent = "Error de conexión: "+(e&&e.message||e); }
+    const email=document.getElementById('lemail').value.trim();
+    const password=document.getElementById('lpass').value;
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error){ msg.textContent='No se pudo entrar: '+error.message; return; }
+    rutear(data.session);
+  }catch(e){ msg.textContent='Error de conexión: '+(e&&e.message||e); }
+}
+async function crear(){
+  const msg=document.getElementById('loginMsg');
+  const nombre=document.getElementById('rNombre').value.trim();
+  const email=document.getElementById('lemail').value.trim();
+  const password=document.getElementById('lpass').value;
+  if(!nombre){ msg.textContent='Pon tu nombre.'; return; }
+  if(password.length<6){ msg.textContent='La contraseña debe tener al menos 6 caracteres.'; return; }
+  msg.textContent='Creando cuenta…';
+  try{
+    const {data,error}=await sb.auth.signUp({email,password,options:{
+      emailRedirectTo: location.href.split('#')[0],
+      data:{ nombre, empresa:document.getElementById('rEmpresa').value.trim(), contacto:document.getElementById('rContacto').value.trim() }
+    }});
+    if(error){ msg.textContent='No se pudo crear: '+error.message; return; }
+    if(data.session){ rutear(data.session); }
+    else { msg.classList.remove('err'); document.getElementById('loginMsg').innerHTML='<span class="ok">Cuenta creada. Te enviamos un correo para confirmarla; ábrelo y luego entra aquí.</span>'; modo('entrar'); }
+  }catch(e){ msg.textContent='Error de conexión: '+(e&&e.message||e); }
 }
 async function salir(){ await sb.auth.signOut(); location.reload(); }
-function mostrarApp(session){
+
+async function rutear(session){
+  const email=session.user.email;
+  // asegurar perfil
+  let {data:perf}=await sb.from('perfiles').select('*').eq('user_id',session.user.id).maybeSingle();
+  if(!perf){
+    const md=session.user.user_metadata||{};
+    const ins={user_id:session.user.id, rol:'cliente', nombre:md.nombre||'', empresa:md.empresa||'', contacto:md.contacto||''};
+    const r=await sb.from('perfiles').insert(ins).select().maybeSingle();
+    perf = r.data || ins;
+  }
+  PERFIL=perf; ES_ADMIN = perf.rol==='admin';
   document.getElementById('login').classList.add('oculto');
-  document.getElementById('app').classList.remove('oculto');
-  document.getElementById('quien').textContent = session.user.email;
-  cargarTodo();
+  if(ES_ADMIN){ document.getElementById('appAdmin').classList.remove('oculto'); document.getElementById('quienA').textContent=email; cargarAdmin(); }
+  else { document.getElementById('appCliente').classList.remove('oculto'); document.getElementById('quienC').textContent=email; cargarCliente(); }
+}
+
+// ================= ADMIN: carga =================
+async function cargarAdmin(){
+  const [c,u,s,p,l]=await Promise.all([
+    sb.from('clientes').select('*').order('creado',{ascending:false}),
+    sb.from('uso').select('*').order('creado',{ascending:false}).limit(20000),
+    sb.from('solicitudes').select('*').order('creado',{ascending:false}),
+    sb.from('perfiles').select('*'),
+    sb.from('licencias').select('*').order('creado',{ascending:false})
+  ]);
+  CLIENTES=c.data||[]; USO=u.data||[]; SOL=s.data||[]; PERFILES=p.data||[]; LICS=l.data||[];
+  pintaResumen(); pintaSolicitudes(); pintaClientes(); pintaSinRegistrar(); pintaLicencias(); llenaSelCuenta();
 }
 function ir(t){
-  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('act',b.dataset.tab===t));
-  ['resumen','clientes','uso'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('oculto',x!==t));
+  document.querySelectorAll('#appAdmin nav button').forEach(b=>b.classList.toggle('act',b.dataset.tab===t));
+  ['resumen','solicitudes','clientes','licencias','uso','firma'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('oculto',x!==t));
 }
+function perfilDe(uid){ return PERFILES.find(p=>p.user_id===uid)||{}; }
 
-// ---------- carga ----------
-async function cargarTodo(){
-  const c = await sb.from('clientes').select('*').order('creado',{ascending:false});
-  CLIENTES = c.data||[];
-  const u = await sb.from('uso').select('*').order('creado',{ascending:false}).limit(20000);
-  USO = u.data||[];
-  pintaResumen(); pintaClientes(); pintaSinRegistrar(); llenaSelCuenta();
-}
-
-// ---------- resumen ----------
+// ================= ADMIN: resumen =================
 function pintaResumen(){
-  const hoy = new Date().toISOString().slice(0,10);
-  const hace30 = new Date(Date.now()-30*864e5);
-  const activos = new Set(USO.filter(x=>new Date(x.creado)>=hace30).map(x=>x.codigo_pc));
-  const hoyN = USO.filter(x=>x.creado.slice(0,10)===hoy).length;
-  const kpis = [
+  const hoy=new Date().toISOString().slice(0,10);
+  const hace30=new Date(Date.now()-30*864e5);
+  const activos=new Set(USO.filter(x=>new Date(x.creado)>=hace30).map(x=>x.codigo_pc));
+  const hoyN=USO.filter(x=>x.creado.slice(0,10)===hoy).length;
+  const pend=SOL.filter(s=>s.estado==='pendiente').length;
+  const kpis=[
     ['Clientes', CLIENTES.filter(c=>c.estado==='cliente').length],
     ['Prospectos', CLIENTES.filter(c=>c.estado==='prospecto').length],
+    ['Solicitudes pendientes', pend],
     ['Cuentas activas (30 d)', activos.size],
     ['Comandos hoy', hoyN],
     ['Comandos (total)', USO.length],
   ];
-  document.getElementById('kpis').innerHTML = kpis.map(k=>
-    `<div class="tarjeta"><div class="n">${k[1]}</div><div class="e">${k[0]}</div></div>`).join('');
-
-  // top comandos
-  const porCmd = cuenta(USO.map(x=>x.comando));
-  const top = porCmd.slice(0,15);
-  dibujaBarras('gTop', top.map(x=>x[0]), top.map(x=>x[1]), '#3ecf8e');
-
-  // por día
-  const dias = [], etq = [];
-  for(let i=29;i>=0;i--){ const d=new Date(Date.now()-i*864e5).toISOString().slice(0,10); etq.push(d.slice(5)); dias.push(USO.filter(x=>x.creado.slice(0,10)===d).length); }
-  dibujaLinea('gDia', etq, dias);
-
-  // cuentas más activas
-  const porCta = cuenta(USO.map(x=>x.codigo_pc)).slice(0,10);
-  const max = porCta.length?porCta[0][1]:1;
-  document.getElementById('topCuentas').innerHTML = porCta.length? porCta.map(x=>{
-    const cli = CLIENTES.find(c=>(c.codigo_pc||'').toUpperCase()===x[0].toUpperCase());
-    const nom = cli? cli.nombre : '<span style="color:var(--tenue)">sin registrar</span>';
+  document.getElementById('kpis').innerHTML=kpis.map(k=>`<div class="tarjeta"><div class="n">${k[1]}</div><div class="e">${k[0]}</div></div>`).join('');
+  const porCmd=cuenta(USO.map(x=>x.comando)).slice(0,15);
+  dibujaBarras('gTop',porCmd.map(x=>x[0]),porCmd.map(x=>x[1]),'#3ecf8e');
+  const dias=[],etq=[];
+  for(let i=29;i>=0;i--){const d=new Date(Date.now()-i*864e5).toISOString().slice(0,10);etq.push(d.slice(5));dias.push(USO.filter(x=>x.creado.slice(0,10)===d).length);}
+  dibujaLinea('gDia',etq,dias);
+  const porCta=cuenta(USO.map(x=>x.codigo_pc)).slice(0,10);
+  const max=porCta.length?porCta[0][1]:1;
+  document.getElementById('topCuentas').innerHTML=porCta.length?porCta.map(x=>{
+    const cli=CLIENTES.find(c=>(c.codigo_pc||'').toUpperCase()===x[0].toUpperCase());
+    const nom=cli?esc(cli.nombre):'<span style="color:var(--tenue)">sin registrar</span>';
     return `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${nom} <span style="color:var(--tenue)">${x[0]}</span></span><b>${x[1]}</b></div><div class="barra"><i style="width:${Math.round(x[1]/max*100)}%"></i></div></div>`;
-  }).join('') : '<div class="vacio">Todavía no hay uso registrado.</div>';
+  }).join(''):'<div class="vacio">Todavía no hay uso registrado.</div>';
+  const b=document.getElementById('badgeSol'); b.textContent=pend?('· '+pend):''; b.className=pend?'warn':'';
 }
 
-// ---------- clientes ----------
-function pintaClientes(){
-  const q = (document.getElementById('buscaCli').value||'').toLowerCase();
-  const lista = CLIENTES.filter(c=>!q || [c.nombre,c.empresa,c.codigo_pc,c.contacto].some(v=>(v||'').toLowerCase().includes(q)));
-  document.getElementById('vacioCli').classList.toggle('oculto', CLIENTES.length>0);
-  document.getElementById('tbCli').innerHTML = lista.map(c=>{
-    const ch = c.estado==='cliente'?'cli':c.estado==='vencido'?'ven':'pro';
+// ================= ADMIN: solicitudes =================
+function pintaSolicitudes(){
+  document.getElementById('vacioSol').classList.toggle('oculto',SOL.length>0);
+  document.getElementById('tbSol').innerHTML=SOL.map(s=>{
+    const pf=perfilDe(s.user_id);
+    const ch=s.estado==='pendiente'?'pend':s.estado==='emitida'?'emit':'rech';
+    const acc=s.estado==='pendiente'
+      ? `<button class="pri" onclick='abrirEmit(${JSON.stringify(s)})'>Emitir</button> <button class="peligro" onclick="rechazar(${s.id})">Rechazar</button>`
+      : '';
     return `<tr>
-      <td>${esc(c.nombre)}</td><td>${esc(c.empresa)}</td><td>${esc(c.contacto)}</td>
-      <td style="font-family:Consolas,monospace">${esc(c.codigo_pc)}</td>
-      <td>${esc(c.plan)}</td><td><span class="chip ${ch}">${c.estado}</span></td>
-      <td>${c.vence||''}</td>
-      <td><button onclick='editarCliente(${JSON.stringify(c)})'>Editar</button></td></tr>`;
+      <td>${(s.creado||'').slice(0,10)}</td>
+      <td>${esc(pf.nombre)||'<span style="color:var(--tenue)">—</span>'}</td>
+      <td>${esc(pf.contacto)}</td>
+      <td class="mono">${esc(s.codigo_pc)}</td>
+      <td>${esc(s.plan)}</td>
+      <td><span class="chip ${ch}">${s.estado}</span></td>
+      <td>${acc}</td></tr>`;
+  }).join('');
+}
+async function rechazar(id){
+  if(!confirm('¿Rechazar esta solicitud?')) return;
+  await sb.from('solicitudes').update({estado:'rechazada'}).eq('id',id);
+  cargarAdmin();
+}
+
+// ================= ADMIN: emisión =================
+function abrirEmit(s){
+  const pf=perfilDe(s.user_id);
+  document.getElementById('eSolId').value=s.id;
+  document.getElementById('eUserId').value=s.user_id;
+  document.getElementById('eCliente').value=pf.nombre||'';
+  document.getElementById('eCodigo').value=s.codigo_pc||'';
+  document.getElementById('ePlan').value=s.plan||'anual';
+  document.getElementById('eVence').value='';
+  document.getElementById('eActu').value='';
+  document.getElementById('eSalida').innerHTML='';
+  pintaEstadoClaveEmit();
+  document.getElementById('emitBg').classList.remove('oculto');
+}
+function cerrarEmit(){ document.getElementById('emitBg').classList.add('oculto'); }
+function pintaEstadoClaveEmit(){
+  const e=document.getElementById('eClaveEstado');
+  if(!CLAVE_PRIV){ e.innerHTML='<span class="warn">Primero carga tu clave privada en la pestaña «Clave de firma».</span>'; document.getElementById('btnFirmar').disabled=true; }
+  else { e.innerHTML = CLAVE_COINCIDE?'<span class="ok">Clave cargada y verificada (coincide con el plugin).</span>':'<span class="warn">Clave cargada, pero NO coincide con la clave pública del plugin actual. Las licencias no validarán hasta actualizar el plugin.</span>'; document.getElementById('btnFirmar').disabled=false; }
+}
+async function firmarYEmitir(){
+  if(!CLAVE_PRIV){ return; }
+  const sal=document.getElementById('eSalida');
+  const cliente=document.getElementById('eCliente').value.trim();
+  const pc=document.getElementById('eCodigo').value.trim().toUpperCase();
+  const plan=document.getElementById('ePlan').value;
+  const vence=document.getElementById('eVence').value;
+  const actu=document.getElementById('eActu').value;
+  if(!cliente||!pc){ sal.innerHTML='<span class="err">Falta cliente o código.</span>'; return; }
+  const id='PV-'+Date.now().toString(36).toUpperCase();
+  const obj={ id, pc, cliente, plan };
+  if(vence) obj.vence=vence;
+  if(actu) obj.actualizaciones=actu;
+  let texto;
+  try{ texto=await firmarLicencia(CLAVE_PRIV,obj); }
+  catch(e){ sal.innerHTML='<span class="err">Error al firmar: '+(e.message||e)+'</span>'; return; }
+  // guardar en licencias
+  const solId=document.getElementById('eSolId').value;
+  const userId=document.getElementById('eUserId').value;
+  const r=await sb.from('licencias').insert({user_id:userId,codigo_pc:pc,plan,texto,vence:vence||null,actualizaciones:actu||null});
+  if(r.error){ sal.innerHTML='<span class="err">Firma OK pero no se pudo guardar: '+r.error.message+'</span>'; return; }
+  if(solId) await sb.from('solicitudes').update({estado:'emitida'}).eq('id',solId);
+  // reflejar en CRM (clientes)
+  const existe=CLIENTES.find(c=>(c.codigo_pc||'').toUpperCase()===pc);
+  const pf=perfilDe(userId);
+  const datos={nombre:cliente,empresa:pf.empresa||null,contacto:pf.contacto||null,codigo_pc:pc,plan,estado:'cliente',vence:vence||null};
+  if(existe) await sb.from('clientes').update(datos).eq('id',existe.id);
+  else await sb.from('clientes').insert(datos);
+  sal.innerHTML='<p class="ok">Licencia emitida. El cliente ya la ve en su portal.</p><div class="lic">'+esc(texto)+'</div>';
+  cargarAdmin();
+}
+
+// ================= ADMIN: clave de firma =================
+function cargarClaveArchivo(inp){
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  const fr=new FileReader();
+  fr.onload=async()=>{ await usarClave(fr.result); };
+  fr.readAsText(f);
+}
+async function usarClave(txt){
+  const e=document.getElementById('estadoClave');
+  try{
+    CLAVE_PRIV=await importarPrivada(txt);
+    CLAVE_COINCIDE=await coincideConPublica(CLAVE_PRIV,CLAVE_PUBLICA_ACTUAL);
+    e.innerHTML = CLAVE_COINCIDE
+      ? '<span class="ok">✓ Clave cargada y verificada: coincide con el plugin actual. Ya puedes emitir.</span>'
+      : '<span class="warn">Clave cargada, pero no coincide con la clave pública del plugin actual (F98BFEFF). Si es una clave nueva, hay que actualizar el plugin con su pública.</span>';
+  }catch(err){
+    CLAVE_PRIV=null; CLAVE_COINCIDE=false;
+    e.innerHTML = err.message==='SEC1'
+      ? '<span class="err">Ese archivo es una clave EC en formato SEC1, que el navegador no admite. Conviértela a PKCS#8: <code>openssl pkcs8 -topk8 -nocrypt -in clave.pem -out clave_pkcs8.pem</code> y carga la nueva.</span>'
+      : '<span class="err">No pude leer la clave ('+(err.message||err)+'). Debe ser PKCS#8 (.pem con «BEGIN PRIVATE KEY») o JWK (.json).</span>';
+  }
+}
+async function generarClaveNueva(){
+  const cont=document.getElementById('nuevaClave');
+  const kp=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
+  const spki=new Uint8Array(await crypto.subtle.exportKey('spki',kp.publicKey));
+  const pkcs8=new Uint8Array(await crypto.subtle.exportKey('pkcs8',kp.privateKey));
+  const pubB64=btoa(String.fromCharCode(...spki));
+  let pem='-----BEGIN PRIVATE KEY-----\n'; const b=btoa(String.fromCharCode(...pkcs8)); for(let i=0;i<b.length;i+=64)pem+=b.slice(i,i+64)+'\n'; pem+='-----END PRIVATE KEY-----\n';
+  const blob=new Blob([pem],{type:'text/plain'}); const url=URL.createObjectURL(blob);
+  cont.innerHTML=`<p class="ok">Clave nueva generada.</p>
+    <p class="msg">1) Descarga y guarda la clave privada a buen recaudo (no la subas a ningún lado):</p>
+    <a class="pri" style="display:inline-block;padding:7px 12px;border-radius:6px;text-decoration:none" href="${url}" download="HerramientasPV-CLAVE-PRIVADA-nueva.pem">Descargar clave privada</a>
+    <p class="msg" style="margin-top:12px">2) Pásame esta clave pública para ponerla en el plugin (hay que recompilar):</p>
+    <div class="lic">${pubB64}</div>`;
+}
+
+// ================= ADMIN: clientes =================
+function pintaClientes(){
+  const q=(document.getElementById('buscaCli').value||'').toLowerCase();
+  const lista=CLIENTES.filter(c=>!q||[c.nombre,c.empresa,c.codigo_pc,c.contacto].some(v=>(v||'').toLowerCase().includes(q)));
+  document.getElementById('vacioCli').classList.toggle('oculto',CLIENTES.length>0);
+  document.getElementById('tbCli').innerHTML=lista.map(c=>{
+    const ch=c.estado==='cliente'?'cli':c.estado==='vencido'?'ven':'pro';
+    return `<tr><td>${esc(c.nombre)}</td><td>${esc(c.empresa)}</td><td>${esc(c.contacto)}</td>
+      <td class="mono">${esc(c.codigo_pc)}</td><td>${esc(c.plan)}</td><td><span class="chip ${ch}">${c.estado}</span></td>
+      <td>${c.vence||''}</td><td><button onclick='editarCliente(${JSON.stringify(c)})'>Editar</button></td></tr>`;
   }).join('');
 }
 function pintaSinRegistrar(){
-  const regs = new Set(CLIENTES.map(c=>(c.codigo_pc||'').toUpperCase()).filter(Boolean));
-  const m = {};
-  USO.forEach(x=>{ const k=x.codigo_pc.toUpperCase(); if(regs.has(k))return; (m[k]=m[k]||{n:0,ult:x.creado}); m[k].n++; if(x.creado>m[k].ult)m[k].ult=x.creado; });
-  const filas = Object.entries(m).sort((a,b)=>b[1].n-a[1].n);
-  document.getElementById('vacioSin').classList.toggle('oculto', filas.length>0);
-  document.getElementById('tbSin').innerHTML = filas.map(([cod,v])=>
-    `<tr><td style="font-family:Consolas,monospace">${cod}</td><td>${v.n}</td><td>${v.ult.slice(0,10)}</td>
-     <td><button onclick="editarCliente({codigo_pc:'${cod}'})">Registrar</button></td></tr>`).join('');
+  const regs=new Set(CLIENTES.map(c=>(c.codigo_pc||'').toUpperCase()).filter(Boolean));
+  const m={};
+  USO.forEach(x=>{const k=x.codigo_pc.toUpperCase();if(regs.has(k))return;(m[k]=m[k]||{n:0,ult:x.creado});m[k].n++;if(x.creado>m[k].ult)m[k].ult=x.creado;});
+  const filas=Object.entries(m).sort((a,b)=>b[1].n-a[1].n);
+  document.getElementById('vacioSin').classList.toggle('oculto',filas.length>0);
+  document.getElementById('tbSin').innerHTML=filas.map(([cod,v])=>`<tr><td class="mono">${cod}</td><td>${v.n}</td><td>${v.ult.slice(0,10)}</td><td><button onclick="editarCliente({codigo_pc:'${cod}'})">Registrar</button></td></tr>`).join('');
 }
-
-// ---------- uso por cuenta ----------
-function llenaSelCuenta(){
-  const cods = [...new Set(USO.map(x=>x.codigo_pc))];
-  const sel = document.getElementById('selCuenta');
-  sel.innerHTML = '<option value="">— elige —</option>' + cods.map(c=>{
-    const cli = CLIENTES.find(x=>(x.codigo_pc||'').toUpperCase()===c.toUpperCase());
-    return `<option value="${c}">${cli?esc(cli.nombre)+' · ':''}${c}</option>`;
-  }).join('');
-}
-function pintaUsoCuenta(){
-  const cod = document.getElementById('selCuenta').value;
-  const cont = document.getElementById('resCuenta');
-  if(!cod){ cont.innerHTML=''; return; }
-  const filas = USO.filter(x=>x.codigo_pc===cod);
-  const porCmd = cuenta(filas.map(x=>x.comando));
-  const max = porCmd.length?porCmd[0][1]:1;
-  const ult = filas.length?filas[0].creado.slice(0,16).replace('T',' '):'—';
-  cont.innerHTML = `<p class="msg">${filas.length} comandos · último uso ${ult} · versión ${esc((filas[0]||{}).version)||'?'}</p>` +
-    porCmd.map(x=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(x[0])}</span><b>${x[1]}</b></div><div class="barra"><i style="width:${Math.round(x[1]/max*100)}%"></i></div></div>`).join('');
-}
-
-// ---------- modal cliente ----------
 function editarCliente(c){
-  c = c||{};
-  document.getElementById('modTit').textContent = c.id?'Editar cliente':'Nuevo cliente';
-  document.getElementById('cId').value = c.id||'';
-  document.getElementById('cNombre').value = c.nombre||'';
-  document.getElementById('cEmpresa').value = c.empresa||'';
-  document.getElementById('cContacto').value = c.contacto||'';
-  document.getElementById('cCodigo').value = c.codigo_pc||'';
-  document.getElementById('cPlan').value = c.plan||'';
-  document.getElementById('cEstado').value = c.estado||'prospecto';
-  document.getElementById('cVence').value = c.vence||'';
-  document.getElementById('cNotas').value = c.notas||'';
-  document.getElementById('btnBorrar').classList.toggle('oculto', !c.id);
+  c=c||{};
+  document.getElementById('modTit').textContent=c.id?'Editar cliente':'Nuevo cliente';
+  document.getElementById('cId').value=c.id||'';
+  document.getElementById('cNombre').value=c.nombre||'';
+  document.getElementById('cEmpresa').value=c.empresa||'';
+  document.getElementById('cContacto').value=c.contacto||'';
+  document.getElementById('cCodigo').value=c.codigo_pc||'';
+  document.getElementById('cPlan').value=c.plan||'';
+  document.getElementById('cEstado').value=c.estado||'prospecto';
+  document.getElementById('cVence').value=c.vence||'';
+  document.getElementById('cNotas').value=c.notas||'';
+  document.getElementById('btnBorrar').classList.toggle('oculto',!c.id);
   document.getElementById('modMsg').textContent='';
   document.getElementById('modalBg').classList.remove('oculto');
 }
 function cerrarModal(){ document.getElementById('modalBg').classList.add('oculto'); }
 async function guardarCliente(){
-  const reg = {
-    nombre:val('cNombre'), empresa:val('cEmpresa'), contacto:val('cContacto'),
-    codigo_pc:val('cCodigo').toUpperCase(), plan:val('cPlan')||null, estado:val('cEstado'),
-    vence:val('cVence')||null, notas:val('cNotas')
-  };
-  if(!reg.nombre){ document.getElementById('modMsg').textContent='El nombre es obligatorio.'; return; }
-  const id = val('cId');
-  const r = id ? await sb.from('clientes').update(reg).eq('id',id) : await sb.from('clientes').insert(reg);
-  if(r.error){ document.getElementById('modMsg').textContent='Error: '+r.error.message; return; }
-  cerrarModal(); cargarTodo();
+  const reg={nombre:val('cNombre'),empresa:val('cEmpresa'),contacto:val('cContacto'),codigo_pc:val('cCodigo').toUpperCase(),plan:val('cPlan')||null,estado:val('cEstado'),vence:val('cVence')||null,notas:val('cNotas')};
+  if(!reg.nombre){document.getElementById('modMsg').textContent='El nombre es obligatorio.';return;}
+  const id=val('cId');
+  const r=id?await sb.from('clientes').update(reg).eq('id',id):await sb.from('clientes').insert(reg);
+  if(r.error){document.getElementById('modMsg').textContent='Error: '+r.error.message;return;}
+  cerrarModal(); cargarAdmin();
 }
 async function borrarCliente(){
-  const id = val('cId'); if(!id) return;
-  if(!confirm('¿Eliminar este cliente? El registro de uso no se borra.')) return;
-  const r = await sb.from('clientes').delete().eq('id',id);
-  if(r.error){ document.getElementById('modMsg').textContent='Error: '+r.error.message; return; }
-  cerrarModal(); cargarTodo();
+  const id=val('cId'); if(!id)return;
+  if(!confirm('¿Eliminar este cliente? El registro de uso no se borra.'))return;
+  const r=await sb.from('clientes').delete().eq('id',id);
+  if(r.error){document.getElementById('modMsg').textContent='Error: '+r.error.message;return;}
+  cerrarModal(); cargarAdmin();
 }
 
-// ---------- utilidades ----------
-function cuenta(arr){ const m={}; arr.forEach(x=>m[x]=(m[x]||0)+1); return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
-function val(id){ return (document.getElementById(id).value||'').trim(); }
-function esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+// ================= ADMIN: licencias =================
+function pintaLicencias(){
+  document.getElementById('vacioLic').classList.toggle('oculto',LICS.length>0);
+  document.getElementById('tbLic').innerHTML=LICS.map(l=>{
+    const pf=perfilDe(l.user_id);
+    return `<tr><td>${(l.creado||'').slice(0,10)}</td><td>${esc(pf.nombre)}</td><td class="mono">${esc(l.codigo_pc)}</td>
+      <td>${esc(l.plan)}</td><td>${l.vence||'—'}</td><td>${l.actualizaciones||'—'}</td>
+      <td><button onclick="verLic('${l.id}')">Ver texto</button></td></tr>`;
+  }).join('');
+}
+function verLic(id){
+  const l=LICS.find(x=>String(x.id)===String(id)); if(!l)return;
+  alert(l.texto);
+}
+
+// ================= ADMIN: uso por cuenta =================
+function llenaSelCuenta(){
+  const cods=[...new Set(USO.map(x=>x.codigo_pc))];
+  const sel=document.getElementById('selCuenta');
+  sel.innerHTML='<option value="">— elige —</option>'+cods.map(c=>{
+    const cli=CLIENTES.find(x=>(x.codigo_pc||'').toUpperCase()===c.toUpperCase());
+    return `<option value="${c}">${cli?esc(cli.nombre)+' · ':''}${c}</option>`;
+  }).join('');
+}
+function pintaUsoCuenta(){
+  const cod=document.getElementById('selCuenta').value;
+  const cont=document.getElementById('resCuenta');
+  if(!cod){cont.innerHTML='';return;}
+  const filas=USO.filter(x=>x.codigo_pc===cod);
+  const porCmd=cuenta(filas.map(x=>x.comando));
+  const max=porCmd.length?porCmd[0][1]:1;
+  const ult=filas.length?filas[0].creado.slice(0,16).replace('T',' '):'—';
+  cont.innerHTML=`<p class="msg">${filas.length} comandos · último uso ${ult} · versión ${esc((filas[0]||{}).version)||'?'}</p>`+
+    porCmd.map(x=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(x[0])}</span><b>${x[1]}</b></div><div class="barra"><i style="width:${Math.round(x[1]/max*100)}%"></i></div></div>`).join('');
+}
+
+// ================= CLIENTE =================
+async function cargarCliente(){
+  document.getElementById('dlMsi').href=MSI_URL;
+  document.getElementById('pNombre').value=PERFIL.nombre||'';
+  document.getElementById('pEmpresa').value=PERFIL.empresa||'';
+  document.getElementById('pContacto').value=PERFIL.contacto||'';
+  const [l,s]=await Promise.all([
+    sb.from('licencias').select('*').order('creado',{ascending:false}),
+    sb.from('solicitudes').select('*').order('creado',{ascending:false})
+  ]);
+  const lics=l.data||[], sols=s.data||[];
+  // mi licencia
+  const cl=document.getElementById('cliLic');
+  if(lics.length){
+    const last=lics[0];
+    cl.innerHTML=`<p>Plan <b>${esc(last.plan)}</b>${last.vence?(' · vence '+last.vence):' · sin vencimiento'} · PC <span class="mono">${esc(last.codigo_pc)}</span></p>
+      <p class="msg">Copia este texto y pégalo en Civil 3D: <b>Cuenta → Mi Licencia → Activar</b>.</p>
+      <div class="lic" id="licTxt">${esc(last.texto)}</div>
+      <div style="margin-top:8px"><button class="pri" onclick="copiar(this,'${last.id}')">Copiar licencia</button></div>`;
+    window.__lics=lics;
+  } else {
+    cl.innerHTML='<p class="msg">Todavía no tienes una licencia emitida. Solicítala abajo y te la activo.</p>';
+  }
+  // mis solicitudes
+  const ms=document.getElementById('misSol');
+  ms.innerHTML = sols.length? ('<table><thead><tr><th>Fecha</th><th>Código</th><th>Plan</th><th>Estado</th></tr></thead><tbody>'+
+    sols.map(s=>{const ch=s.estado==='pendiente'?'pend':s.estado==='emitida'?'emit':'rech';return `<tr><td>${(s.creado||'').slice(0,10)}</td><td class="mono">${esc(s.codigo_pc)}</td><td>${esc(s.plan)}</td><td><span class="chip ${ch}">${s.estado}</span></td></tr>`;}).join('')+'</tbody></table>') : '';
+  // whatsapp
+  document.getElementById('waLink').href=`https://wa.me/${WA_NUM}?text=`+encodeURIComponent('Hola, soy '+(PERFIL.nombre||'')+'. Quiero una licencia de Herramientas PV. Mi código de solicitud es: '+(document.getElementById('sCodigo').value||'(lo copio del plugin)'));
+}
+function copiar(btn,id){
+  const l=(window.__lics||[]).find(x=>String(x.id)===String(id)); if(!l)return;
+  navigator.clipboard.writeText(l.texto).then(()=>{ const t=btn.textContent; btn.textContent='¡Copiado!'; setTimeout(()=>btn.textContent=t,1500); });
+}
+async function enviarSolicitud(){
+  const msg=document.getElementById('solMsg');
+  const cod=(document.getElementById('sCodigo').value||'').trim().toUpperCase();
+  const plan=document.getElementById('sPlan').value;
+  const nota=document.getElementById('sNota').value.trim();
+  if(!/^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(cod)){ msg.innerHTML='<span class="err">El código debe tener el formato XXXX-XXXX-XXXX-XXXX (lo ves en el plugin, Cuenta → Mi Licencia).</span>'; return; }
+  msg.textContent='Enviando…';
+  const r=await sb.from('solicitudes').insert({user_id:PERFIL.user_id,codigo_pc:cod,plan,nota:nota||null});
+  if(r.error){ msg.innerHTML='<span class="err">No se pudo enviar: '+r.error.message+'</span>'; return; }
+  msg.innerHTML='<span class="ok">¡Solicitud enviada! Te avisaré cuando esté lista tu licencia.</span>';
+  document.getElementById('sNota').value='';
+  cargarCliente();
+}
+async function guardarPerfil(){
+  const m=document.getElementById('perfMsg');
+  const reg={nombre:val('pNombre'),empresa:val('pEmpresa'),contacto:val('pContacto')};
+  const r=await sb.from('perfiles').update(reg).eq('user_id',PERFIL.user_id);
+  if(r.error){ m.innerHTML='<span class="err">Error: '+r.error.message+'</span>'; return; }
+  PERFIL.nombre=reg.nombre; PERFIL.empresa=reg.empresa; PERFIL.contacto=reg.contacto;
+  m.innerHTML='<span class="ok">Guardado.</span>';
+}
+
+// ================= utilidades =================
+function cuenta(arr){const m={};arr.forEach(x=>m[x]=(m[x]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
+function val(id){return (document.getElementById(id).value||'').trim();}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
 function dibujaBarras(id,labels,data,color){
   if(chartTop&&id==='gTop'){chartTop.destroy();}
-  const ctx=document.getElementById(id);
-  const ch=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:color}]},
-    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9a9a9a',maxRotation:60,minRotation:45}},y:{ticks:{color:'#9a9a9a'},grid:{color:'#333'}}}}});
+  const ch=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:color}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9a9a9a',maxRotation:60,minRotation:45}},y:{ticks:{color:'#9a9a9a'},grid:{color:'#333'}}}}});
   if(id==='gTop')chartTop=ch;
 }
 function dibujaLinea(id,labels,data){
   if(chartDia){chartDia.destroy();}
-  const ctx=document.getElementById(id);
-  chartDia=new Chart(ctx,{type:'line',data:{labels,datasets:[{data,borderColor:'#60a5fa',backgroundColor:'rgba(96,165,250,.15)',fill:true,tension:.3,pointRadius:2}]},
-    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9a9a9a',maxRotation:0,autoSkip:true,maxTicksLimit:10}},y:{ticks:{color:'#9a9a9a'},grid:{color:'#333'},beginAtZero:true}}}});
+  chartDia=new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:[{data,borderColor:'#60a5fa',backgroundColor:'rgba(96,165,250,.15)',fill:true,tension:.3,pointRadius:2}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9a9a9a',maxRotation:0,autoSkip:true,maxTicksLimit:10}},y:{ticks:{color:'#9a9a9a'},grid:{color:'#333'},beginAtZero:true}}}});
 }
 
-document.getElementById('lpass').addEventListener('keydown',e=>{if(e.key==='Enter')entrar();});
+document.getElementById('lpass').addEventListener('keydown',e=>{if(e.key==='Enter')accion();});
 arranque();
 </script>
 </body>
